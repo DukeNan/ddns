@@ -1,0 +1,4 @@
+SQLAlchemy==1.3.21
+aliyun-python-sdk-alidns==2.6.19
+requests==2.25.1
+PyMySQL==0.10.1
