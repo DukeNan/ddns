@@ -35,11 +35,9 @@ pip install -r requirements.txt
 deactivate
 ```
 
-
-
 每分钟运行一次脚本
 
 ```bash
-python3 run.py
+*/1 * * * * /home/root/ddns/.env/bin/python3 /home/root/ddns/update_dns.py
 ```
 

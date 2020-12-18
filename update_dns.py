@@ -9,7 +9,7 @@ from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDo
 from aliyunsdkcore.client import AcsClient
 from sqlalchemy import create_engine, text
 
-from settings import DB_URL, ACCESS_KEY_ID, ACCESS_KEY_SECRET, DOMAIN, RECORD_ID
+from settings import DB_URL, ACCESS_KEY_ID, ACCESS_KEY_SECRET, DOMAIN, RECORD_ID, logging, LOGO
 
 
 class DNS:
@@ -71,6 +71,7 @@ def get_md5(string: str):
 
 
 def run():
+    logging.info(LOGO)
     ip_address = get_ip_address()
     now = str(datetime.datetime.now().date())
     ip_hash = get_md5(f'{now}@{ip_address}')
@@ -84,6 +85,7 @@ def run():
     if not insert_result:
         return
     # 更新dns
+    logging.info('==========公网IP已变更==========')
     dns = DNS()
     dns.update_dns(ip_address)
 
