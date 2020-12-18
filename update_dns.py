@@ -89,7 +89,4 @@ def run():
 
 
 if __name__ == '__main__':
-    # run()
-    dns = DNS()
-    aa = dns.get_dns_list()
-    print(aa)
+    run()

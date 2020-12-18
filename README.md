@@ -15,9 +15,27 @@
 
 
 
-![ddns流程图](http://image.dukenan.top/blog/%E6%9C%AA%E5%91%BD%E5%90%8D%E6%96%87%E4%BB%B6.png)
+![ddns流程图](http://image.dukenan.top/blog/未命名文件.jpg)
 
 ### 运行
+
+进入项目目录，创建虚拟环境
+
+```bash
+python3 -m venv .env
+```
+
+安装依赖
+
+```bash
+source .nat/bin/activate
+
+pip install -r requirements.txt
+
+deactivate
+```
+
+
 
 每分钟运行一次脚本
 
