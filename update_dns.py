@@ -55,7 +55,7 @@ def get_ip_address():
 def update_db(data: dict):
     engine = create_engine(DB_URL)
     sql = text(
-        'insert into nat_log(ip_addr, ip_hash, ssh_cmd) select :ip_addr, :ip_hash, :ssh_cmd from dual where not exists(select id from nat_log where ip_hash=:ip_hash)')
+        'insert into nat_log(ip_addr, ip_hash, ssh_cmd) select :ip_addr, :ip_hash, :ssh_cmd from dual where not exists(select id from nat_log where ip_hash=:ip_hash or (ip_addr=:ip_addr and create_time > date_add(now(), interval -2 day)))')
     with engine.connect() as conn:
         result = conn.execute(sql, **data)
     return result.lastrowid
