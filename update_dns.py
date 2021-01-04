@@ -7,6 +7,7 @@ import requests
 from aliyunsdkalidns.request.v20150109.DescribeDomainRecordsRequest import DescribeDomainRecordsRequest
 from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDomainRecordRequest
 from aliyunsdkcore.client import AcsClient
+from requests.exceptions import Timeout
 from sqlalchemy import create_engine, text
 
 from settings import DB_URL, ACCESS_KEY_ID, ACCESS_KEY_SECRET, DOMAIN, RECORD_ID, logging, LOGO
@@ -35,21 +36,24 @@ class DNS:
         return json.loads(response.decode('utf-8'))
 
 
-def update_dns():
-    pass
-
-
 def get_ip_address():
     count = 1
+    extract_field = 'query'
     url = 'http://ip-api.com/json/'
-    response = requests.get(url)
+    url_1 = 'https://ipapi.co/json'
+    try:
+        response = requests.get(url, timeout=10)
+    except Timeout as e:
+        logging.info(e)
+        response = requests.get(url_1, timeout=10)
+        extract_field = 'ip'
     if count > 3:  # 重试三次断开
         return
     if response.status_code != 200:
         time.sleep(5)
         get_ip_address()
     result_dict = response.json()
-    return result_dict.get('query', None)
+    return result_dict.get(extract_field, None)
 
 
 def update_db(data: dict):
