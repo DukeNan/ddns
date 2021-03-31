@@ -10,3 +10,5 @@
 .ropeproject
 
 logs
+ip.json
+demo.py

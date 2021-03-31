@@ -1,16 +1,15 @@
-import datetime
-import hashlib
 import json
 import time
+from pathlib import Path
+from datetime import datetime
 
 import requests
 from aliyunsdkalidns.request.v20150109.DescribeDomainRecordsRequest import DescribeDomainRecordsRequest
 from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDomainRecordRequest
 from aliyunsdkcore.client import AcsClient
 from requests.exceptions import Timeout
-from sqlalchemy import create_engine, text
 
-from settings import DB_URL, ACCESS_KEY_ID, ACCESS_KEY_SECRET, DOMAIN, RECORD_ID, logging, LOGO
+from settings import ACCESS_KEY_ID, ACCESS_KEY_SECRET, DOMAIN, RECORD_ID, logging, LOGO
 
 
 class DNS:
@@ -24,11 +23,11 @@ class DNS:
 
         return json.loads(response.decode('utf-8'))
 
-    def update_dns(self, ip_address):
+    def update_dns(self, ip_address, prefix):
         request = UpdateDomainRecordRequest()
         request.set_accept_format('json')
         request.set_RecordId(RECORD_ID)
-        request.set_RR("nat")
+        request.set_RR(prefix)
         request.set_Type("A")
         request.set_Value(ip_address)
         response = self.client.do_action_with_exception(request)
@@ -56,42 +55,37 @@ def get_ip_address():
     return result_dict.get(extract_field, None)
 
 
-def update_db(data: dict):
-    engine = create_engine(DB_URL)
-    sql = text(
-        'insert into nat_log(ip_addr, ip_hash, ssh_cmd) select :ip_addr, :ip_hash, :ssh_cmd from dual where not exists(select id from nat_log where ip_hash=:ip_hash or (ip_addr=:ip_addr and create_time > date_add(now(), interval -2 day)))')
-    with engine.connect() as conn:
-        result = conn.execute(sql, **data)
-    return result.lastrowid
+def match_ip(ip_address):
+    "匹配当前ip"
+    file_path = Path(__file__).resolve().parent.joinpath('ip.json')
+    data = {
+        'ip_address': ip_address,
+        'create_time': str(datetime.now())
+    }
+    if not file_path.exists():
+        with open(file_path, 'w') as f:
+            f.write(json.dumps(data))
+        return False
 
-
-def get_md5(string: str):
-    """
-    获取MD5加密字符串
-    """
-    md5 = hashlib.md5()
-    md5.update(string.encode(encoding='utf-8'))
-    return md5.hexdigest()
+    with open(file_path, 'r') as file:
+        temp = json.loads(file.read())
+    if temp.get('ip_address') == ip_address:
+        return True
+    with open(file_path, 'w') as new_f:
+        new_f.write(json.dumps(data))
+    return False
 
 
 def run():
     logging.info(LOGO)
     ip_address = get_ip_address()
-    now = str(datetime.datetime.now().date())
-    ip_hash = get_md5(f'{now}@{ip_address}')
-    data = {
-        'ip_addr': ip_address,
-        'ip_hash': ip_hash,
-        'ssh_cmd': f'ssh -p 8822 ubuntu@{ip_address}',
-    }
-    insert_result = update_db(data)
-    # ip是否更新
-    if not insert_result:
+    # ip是否已存在
+    if match_ip(ip_address):
         return
     # 更新dns
     logging.info('==========公网IP已变更==========')
     dns = DNS()
-    dns.update_dns(ip_address)
+    dns.update_dns(ip_address, prefix='nat')
 
 
 if __name__ == '__main__':
